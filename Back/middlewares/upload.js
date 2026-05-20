@@ -13,10 +13,27 @@ const storage = multer.diskStorage({
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-    const ext  = path.extname(file.originalname);
-    const tipo = file.fieldname === 'archivoDni' ? 'dni' : 'titulo';
-    const ts   = Date.now();
-    cb(null, `${tipo}_${ts}${ext}`);
+    const ext = path.extname(file.originalname);
+    if (file.fieldname === 'archivoDni') {
+      cb(null, `DNI${ext}`);
+      return;
+    }
+
+    if (!req._tituloNextIndex) {
+      const dni = req.body.dni || req.params.dni || 'sin_dni';
+      const dir = path.join(UPLOADS_DIR, dni);
+      const files = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
+      const existing = files
+        .map(name => {
+          const match = name.match(/^Titulo-(\d+)\.[^.]+$/i);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(Boolean);
+      req._tituloNextIndex = existing.length ? Math.max(...existing) + 1 : 1;
+    }
+
+    const index = req._tituloNextIndex++;
+    cb(null, `Titulo-${index}${ext}`);
   }
 });
 

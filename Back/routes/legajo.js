@@ -2,14 +2,21 @@ const express  = require('express');
 const path     = require('path');
 const fs       = require('fs');
 const router   = express.Router();
-const Legajo   = require('../models/Legajo');
-const upload   = require('../middleware/upload');
+const Legajo   = require('../models/legajo');
+const upload   = require('../middlewares/upload');
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
 
+const adminOnly = (req, res, next) => {
+  if (!req.isAdmin) {
+    return res.status(403).json({ ok: false, error: 'Acceso restringido' });
+  }
+  next();
+};
+
 // ─── GET /api/legajos ──────────────────────────────────────────────────────────
 // Lista todos los legajos (con filtro opcional por estado y búsqueda por nombre/DNI)
-router.get('/', async (req, res) => {
+router.get('/', adminOnly, async (req, res) => {
   try {
     const { estado, q } = req.query;
     const filtro = {};
@@ -18,17 +25,82 @@ router.get('/', async (req, res) => {
       { apellidoNombre: { $regex: q, $options: 'i' } },
       { dni: { $regex: q, $options: 'i' } }
     ];
-    const legajos = await Legajo.find(filtro)
-      .select('apellidoNombre dni cuil estado creadoEn actualizadoEn cargos tituloPrincipal')
-      .sort({ actualizadoEn: -1 });
-    res.json({ ok: true, data: legajos });
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, Math.min(50, parseInt(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const [total, legajos] = await Promise.all([
+      Legajo.countDocuments(filtro),
+      Legajo.find(filtro)
+        .select('apellidoNombre dni cuil estado creadoEn actualizadoEn cargos tituloPrincipal')
+        .sort({ actualizadoEn: -1 })
+        .skip(skip)
+        .limit(limit)
+    ]);
+
+    res.json({ ok: true, data: legajos, page, limit, total });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ─── GET /api/legajos/mi-legajo ─────────────────────────────────────────────────
+router.get('/mi-legajo', async (req, res) => {
+  try {
+    const dni = req.docenteDni;
+    if (!dni) return res.status(401).json({ ok: false, error: 'No autorizado', isAdmin: req.isAdmin });
+
+    const legajo = await Legajo.findOne({ dni });
+    if (!legajo) return res.status(404).json({ ok: false, error: 'Legajo no encontrado', isAdmin: req.isAdmin });
+    res.json({ ok: true, data: legajo, isAdmin: req.isAdmin });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message, isAdmin: req.isAdmin });
+  }
+});
+
+// ─── POST /api/legajos/cargos ───────────────────────────────────────────────────
+router.post('/cargos', async (req, res) => {
+  try {
+    const dni = req.docenteDni;
+    if (!dni) return res.status(401).json({ ok: false, error: 'No autorizado' });
+
+    const { legajoId } = req.body;
+    let legajo;
+    if (req.isAdmin && legajoId) {
+      legajo = await Legajo.findById(legajoId);
+    } else {
+      legajo = await Legajo.findOne({ dni });
+    }
+
+    if (!legajo) return res.status(404).json({ ok: false, error: 'Legajo no encontrado' });
+
+    const cargos = Array.isArray(req.body.cargos) ? req.body.cargos : [];
+    if (!cargos.length) {
+      return res.status(400).json({ ok: false, error: 'No se enviaron cargos' });
+    }
+
+    legajo.cargos = cargos.map(cargo => ({
+      cupof: cargo.cupof || '',
+      materia: cargo.materia || '',
+      revista: cargo.revista || '',
+      carga: cargo.carga || '',
+      a: cargo.a || '',
+      d: cargo.d || '',
+      t: cargo.t || '',
+      tomaPosesion: cargo.tomaPosesion || null,
+      cese: cargo.cese || null,
+      observaciones: cargo.observaciones || ''
+    }));
+
+    await legajo.save();
+    res.json({ ok: true, data: legajo.cargos });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
 
 // ─── GET /api/legajos/:id ──────────────────────────────────────────────────────
-router.get('/:id', async (req, res) => {
+router.get('/:id', adminOnly, async (req, res) => {
   try {
     const legajo = await Legajo.findById(req.params.id);
     if (!legajo) return res.status(404).json({ ok: false, error: 'Legajo no encontrado' });
@@ -105,14 +177,21 @@ router.post('/',
 // Actualiza datos del legajo (secretaría)
 router.put('/:id', async (req, res) => {
   try {
+    const legajo = await Legajo.findById(req.params.id);
+    if (!legajo) return res.status(404).json({ ok: false, error: 'Legajo no encontrado' });
+
+    if (!req.isAdmin && legajo.dni !== req.docenteDni) {
+      return res.status(403).json({ ok: false, error: 'No autorizado para actualizar este legajo' });
+    }
+
     const { cargos, estado, notasInternas, ...datos } = req.body;
     const update = { ...datos };
     if (cargos !== undefined)       update.cargos       = cargos;
     if (estado !== undefined)       update.estado       = estado;
     if (notasInternas !== undefined) update.notasInternas = notasInternas;
 
-    const legajo = await Legajo.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
-    if (!legajo) return res.status(404).json({ ok: false, error: 'Legajo no encontrado' });
+    Object.assign(legajo, update);
+    await legajo.save();
     res.json({ ok: true, data: legajo });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
@@ -136,6 +215,17 @@ router.post('/:id/archivos',
   async (req, res) => {
     try {
       const legajo = await Legajo.findById(req.params.id);
+      if (!legajo) return res.status(404).json({ ok: false, error: 'Legajo no encontrado' });
+
+      if (req.files && req.files['archivoDni']) {
+        const dniArchivos = legajo.archivos.filter(a => a.tipo === 'dni');
+        dniArchivos.forEach(file => {
+          const filePath = path.join(UPLOADS_DIR, legajo.dni, file.nombre);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        });
+        legajo.archivos = legajo.archivos.filter(a => a.tipo !== 'dni');
+      }
+
       if (req.files) {
         const mapear = (files, tipo) => {
           if (!files) return;
@@ -197,6 +287,8 @@ router.delete('/:id/archivos/:nombre', async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
+
+module.exports = router;
 
 // ─── DELETE /api/legajos/:id ──────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {

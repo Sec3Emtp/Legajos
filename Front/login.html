@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ingreso Docente – Legajos</title>
+  <style>
+    :root {
+      --azul: #003087;
+      --azul-claro: #1565c0;
+      --gris: #64748b;
+      --fondo: #f0f4fb;
+      --blanco: #ffffff;
+      --borde: #c5d3e8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, #f7faff 0%, #dde8f9 100%);
+      font-family: 'Sora', sans-serif;
+      color: #12264e;
+      padding: 20px;
+    }
+    .card {
+      width: min(520px, 100%);
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-radius: 24px;
+      box-shadow: 0 18px 40px rgba(0, 48, 135, 0.12);
+      padding: 36px;
+    }
+    h1 {
+      font-size: 25px;
+      margin-bottom: 10px;
+      color: var(--azul);
+    }
+    p {
+      color: var(--gris);
+      margin-bottom: 28px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--gris);
+    }
+    input {
+      width: 100%;
+      border: 1.5px solid var(--borde);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      color: var(--texto, #12264e);
+      background: #f8fbff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus { border-color: var(--azul-claro); box-shadow: 0 0 0 4px rgba(21, 101, 192, 0.12); }
+    .btn {
+      margin-top: 22px;
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, var(--azul) 0%, var(--azul-claro) 100%);
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .error {
+      margin-top: 14px;
+      color: #b00020;
+      font-size: 13px;
+    }
+    .help {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--gris);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Ingreso con DNI</h1>
+    <p>Ingresá tu número de documento para acceder al formulario de legajo. Cualquier DNI válido puede usar el formulario para crear o editar su legajo.</p>
+    <form id="loginForm">
+      <label for="dni">Documento (DNI)</label>
+      <input id="dni" name="dni" type="text" placeholder="12345678" inputmode="numeric" autocomplete="off" required />
+      <button class="btn" type="submit">Ingresar</button>
+      <div class="error" id="errorMsg"></div>
+    </form>
+    <p class="help">Cualquier DNI válido puede acceder al formulario. Si el legajo ya existe, podrás editar los datos.</p>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      errorMsg.textContent = '';
+      const dniInput = document.getElementById('dni');
+      const dni = dniInput.value.replace(/\D/g, '');
+
+      if (!dni) {
+        errorMsg.textContent = 'Ingresá un DNI válido.';
+        return;
+      }
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dni })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          errorMsg.textContent = result.error || 'No se pudo ingresar. Verificá el DNI.';
+          return;
+        }
+        window.location.href = result.admin ? '/admin' : '/form';
+      } catch (err) {
+        errorMsg.textContent = 'Error de conexión. Intentá nuevamente.';
+      }
+    });
+  </script>
+</body>
+</html>

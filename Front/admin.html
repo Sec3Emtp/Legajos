@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Docentes – Legajos</title>
+  <style>
+    :root {
+      --bg: #f4f8ff;
+      --white: #ffffff;
+      --border: #d8e2f2;
+      --text: #1c2741;
+      --muted: #556d8b;
+      --primary: #003087;
+      --primary-light: #0f4fc3;
+      --success: #0f766e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Sora', sans-serif;
+      background: linear-gradient(180deg, #f7faff 0%, #e6efff 100%);
+      color: var(--text);
+      padding: 20px;
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .brand {
+      display: grid;
+      gap: 6px;
+    }
+    .brand h1 { margin: 0; font-size: 28px; color: var(--primary); }
+    .brand p { margin: 0; color: var(--muted); }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      background: var(--primary);
+      transition: transform 0.15s ease;
+    }
+    .button:hover { transform: translateY(-1px); }
+    .button.secondary { background: #64748b; }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0, 48, 135, 0.08);
+      margin-bottom: 24px;
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .filters input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 14px;
+      background: #f7faff;
+      color: var(--text);
+    }
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+    th, td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+    th { background: #f1f6ff; color: var(--primary); font-weight: 700; }
+    td { color: var(--muted); }
+    td strong { color: var(--text); }
+    tr.selectable-row { cursor: pointer; }
+    tr.selectable-row:hover { background: #f1f6ff; }
+    tr.selectable-row.selected { background: #d8e2f2; }
+    td .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      background: #eef3ff;
+      color: var(--primary);
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .table-actions button {
+      border: none;
+      border-radius: 12px;
+      background: #0f4fc3;
+      color: white;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .panel {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+    .panel .card { margin-bottom: 0; }
+    .detail-fields {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .detail-field {
+      background: #f7faff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .detail-field.full-width {
+      grid-column: span 2;
+    }
+    .detail-field strong { display: block; margin-bottom: 6px; font-size: 13px; color: var(--primary); }
+    
+    @media (max-width: 768px) {
+      .detail-fields {
+        grid-template-columns: 1fr;
+      }
+      .detail-field.full-width {
+        grid-column: span 1;
+      }
+    }
+    .files-list {
+      display: grid;
+      gap: 10px;
+    }
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .file-item a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 18px;
+    }
+    .pagination-info { color: var(--muted); font-size: 14px; }
+    .pagination-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .small-button {
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--primary);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+    .small-button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .message {
+      margin-top: 16px;
+      color: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <h1>Panel de administración</h1>
+        <p>Ver docentes, revisar cargas y descargar los documentos subidos.</p>
+      </div>
+      <div class="controls">
+        <button class="button secondary" id="goForm">Cargar docente</button>
+        <button class="button" id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="filters">
+        <input id="searchInput" type="search" placeholder="Buscar por nombre o DNI" />
+        <button class="button" id="refreshBtn">Actualizar</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>DNI</th>
+              <th>Apellido y Nombre</th>
+              <th>CUIL</th>
+              <th>Última actualización</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="legajosBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <div class="pagination-info" id="paginationInfo"></div>
+        <div class="pagination-buttons">
+          <button class="small-button" id="prevPage">Anterior</button>
+          <button class="small-button" id="nextPage">Siguiente</button>
+        </div>
+      </div>
+      <div class="message" id="listMessage"></div>
+    </div>
+
+    <div class="panel">
+      <div class="card">
+        <h2>Detalle del docente</h2>
+        <div id="detailContent">
+          <p class="message">Seleccioná un docente de la lista para ver más datos.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Documentación</h2>
+        <div id="filesContent">
+          <p class="message">Seleccioná un docente para ver los archivos subidos.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const legajosBody = document.getElementById('legajosBody');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const prevPageBtn = document.getElementById('prevPage');
+    const nextPageBtn = document.getElementById('nextPage');
+    const searchInput = document.getElementById('searchInput');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const detailContent = document.getElementById('detailContent');
+    const filesContent = document.getElementById('filesContent');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const goFormBtn = document.getElementById('goForm');
+    const listMessage = document.getElementById('listMessage');
+    let debounceTimer;
+
+    let page = 1;
+    const limit = 10;
+    let total = 0;
+    let currentLegajo = null;
+
+    const formatDate = iso => iso ? new Date(iso).toLocaleDateString('es-AR') : '-';
+
+    function renderList(legajos) {
+      legajosBody.innerHTML = legajos.map(legajo => `
+        <tr class="selectable-row" data-row-id="${legajo._id}">
+          <td><strong>${legajo.dni}</strong></td>
+          <td>${legajo.apellidoNombre}</td>
+          <td>${legajo.cuil || '-'}</td>
+          <td>${formatDate(legajo.actualizadoEn)}</td>
+          <td class="table-actions">
+            <button data-id="${legajo._id}">Abrir formulario</button>
+            <button class="button secondary" data-cargos-id="${legajo._id}">Cargos</button>
+          </td>
+        </tr>
+      `).join('');
+      if (!legajos.length) {
+        legajosBody.innerHTML = '<tr><td colspan="5">No se encontraron docentes.</td></tr>';
+      }
+    }
+
+    function renderDetail(legajo) {
+      currentLegajo = legajo;
+      detailContent.innerHTML = `
+        <div class="detail-fields">
+          <div class="detail-field full-width"><strong>Apellido y Nombre</strong><span>${legajo.apellidoNombre}</span></div>
+          <div class="detail-field"><strong>DNI</strong><span>${legajo.dni}</span></div>
+          <div class="detail-field"><strong>CUIL</strong><span>${legajo.cuil || '-'}</span></div>
+          <div class="detail-field"><strong>Mail oficial</strong><span>${legajo.mailOficial || '-'}</span></div>
+          <div class="detail-field"><strong>Teléfono / Celular</strong><span>${legajo.telFijo || '-'} / ${legajo.celular || '-'}</span></div>
+          <div class="detail-field full-width"><strong>Domicilio</strong><span>${legajo.calle || '-'} ${legajo.numero || ''}, ${legajo.localidad || '-'} ${legajo.partido || ''}</span></div>
+          <div class="detail-field"><strong>Título principal</strong><span>${legajo.tituloPrincipal || '-'}</span></div>
+          <div class="detail-field"><strong>Antigüedad</strong><span>${legajo.antiguedad || '-'}</span></div>
+          <div class="detail-field full-width"><strong>Otros títulos</strong><span>${legajo.otrosTitulos || '-'}</span></div>
+        </div>
+      `;
+      renderFiles(legajo.archivos || []);
+    }
+
+    function renderFiles(archivos) {
+      if (!archivos.length) {
+        filesContent.innerHTML = '<p class="message">No hay archivos cargados para este docente.</p>';
+        return;
+      }
+      filesContent.innerHTML = '<div class="files-list"></div>';
+      const list = filesContent.querySelector('.files-list');
+      archivos.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `
+          <span>${file.nombreOrig || file.nombre || 'Archivo'}</span>
+          <a href="/api/legajos/${currentLegajo._id}/archivos/${encodeURIComponent(file.nombre)}" target="_blank" rel="noreferrer">Descargar</a>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    async function fetchLegajos() {
+      listMessage.textContent = '';
+      const query = searchInput.value.trim();
+      const url = new URL('/api/legajos', window.location.origin);
+      url.searchParams.set('page', page);
+      url.searchParams.set('limit', limit);
+      if (query) url.searchParams.set('q', query);
+
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'No se pudieron cargar los docentes');
+
+        total = result.total;
+        currentLegajo = null;
+        renderList(result.data);
+        paginationInfo.textContent = `Mostrando ${result.data.length} de ${total} registros (página ${result.page})`;
+        prevPageBtn.disabled = page <= 1;
+        nextPageBtn.disabled = page * limit >= total;
+      } catch (err) {
+        listMessage.textContent = err.message;
+      }
+    }
+
+    async function selectLegajo(id) {
+      try {
+        const response = await fetch(`/api/legajos/${encodeURIComponent(id)}`);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'No se pudo cargar el docente');
+        renderDetail(result.data);
+        document.querySelectorAll('tr.selected').forEach(row => row.classList.remove('selected'));
+        const row = legajosBody.querySelector(`tr[data-row-id="${id}"]`);
+        if (row) row.classList.add('selected');
+      } catch (err) {
+        listMessage.textContent = err.message;
+      }
+    }
+
+    async function openLegajo(id) {
+      window.location.href = `/form?legajoId=${encodeURIComponent(id)}`;
+    }
+
+    legajosBody.addEventListener('click', event => {
+      const cargoButton = event.target.closest('button[data-cargos-id]');
+      if (cargoButton) {
+        window.location.href = `/formulario-cargos?legajoId=${encodeURIComponent(cargoButton.dataset.cargosId)}`;
+        return;
+      }
+      const button = event.target.closest('button[data-id]');
+      if (button) {
+        openLegajo(button.dataset.id);
+        return;
+      }
+      const row = event.target.closest('tr[data-row-id]');
+      if (!row) return;
+      selectLegajo(row.dataset.rowId);
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      page = 1;
+      fetchLegajos();
+    });
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        page = 1;
+        fetchLegajos();
+      }, 250);
+    });
+
+    prevPageBtn.addEventListener('click', () => {
+      if (page > 1) {
+        page -= 1;
+        fetchLegajos();
+      }
+    });
+
+    nextPageBtn.addEventListener('click', () => {
+      if (page * limit < total) {
+        page += 1;
+        fetchLegajos();
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      await fetch('/logout', { method: 'POST' });
+      window.location.href = '/login';
+    });
+
+    goFormBtn.addEventListener('click', () => {
+      window.location.href = '/form';
+    });
+
+    fetchLegajos();
+  </script>
+</body>
+</html>

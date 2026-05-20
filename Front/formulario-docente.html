@@ -82,6 +82,45 @@
       font-weight: 700;
       color: white;
     }
+    .btn-logout {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.7);
+      color: white;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-logout:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-1px);
+    }
+    .btn-logout:active {
+      transform: translateY(0);
+    }
+    .btn-back {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.7);
+      color: white;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-back:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-1px);
+    }
+    .btn-back:active {
+      transform: translateY(0);
+    }
+    .btn-back.hidden {
+      display: none;
+    }
 
     /* Progreso */
     .progress-bar-wrap {
@@ -115,6 +154,21 @@
       font-size: 13.5px;
       color: var(--gris);
       line-height: 1.6;
+    }
+
+    .admin-notice {
+      background: #fff7e6;
+      border: 1px solid #ffd49b;
+      color: #5a4200;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      display: none;
+      font-size: 13px;
+    }
+
+    .admin-notice.show {
+      display: block;
     }
 
     /* Sección */
@@ -363,20 +417,40 @@
     }
     .btn-submit:active { transform: translateY(0); }
 
-    /* Mensaje de éxito */
-    .success-msg {
+    /* Mensajes de estado */
+    .success-msg,
+    .error-msg {
       display: none;
-      background: linear-gradient(135deg, #00897b, #26a69a);
-      color: white;
       border-radius: 14px;
-      padding: 30px;
+      padding: 24px 28px;
       text-align: center;
       margin-top: 20px;
-      box-shadow: 0 4px 20px rgba(0,137,123,0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
-    .success-msg.show { display: block; animation: slideUp 0.4s ease; }
-    .success-msg h3 { font-size: 20px; margin-bottom: 8px; }
-    .success-msg p { font-size: 14px; opacity: 0.9; }
+    .success-msg {
+      background: linear-gradient(135deg, #00897b, #26a69a);
+      color: white;
+    }
+    .error-msg {
+      background: #ffe6e9;
+      color: #b71c1c;
+      border: 1px solid #f5c6cb;
+    }
+    .success-msg.show,
+    .error-msg.show {
+      display: block;
+      animation: slideUp 0.4s ease;
+    }
+    .success-msg h3,
+    .error-msg h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .success-msg p,
+    .error-msg p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
 
     /* Divider dentro de sección */
     .divider {
@@ -407,6 +481,8 @@
       <strong>Registro de Personal</strong>
       Alta de legajo docente
     </div>
+    <button id="btnBack" type="button" class="btn-back hidden">Volver</button>
+    <button id="btnSalir" type="button" class="btn-logout">Salir</button>
   </div>
   <div class="progress-bar-wrap">
     <div class="progress-bar" id="progressBar"></div>
@@ -420,7 +496,9 @@
     <p>Completá todos los datos con información fidedigna. Los campos marcados con <span style="color:#e53935">*</span> son obligatorios. También podés adjuntar el frente y dorso de tu DNI y tus títulos habilitantes.</p>
   </div>
 
-  <form id="formDocente" novalidate>
+  <div class="admin-notice" id="adminNotice"></div>
+
+  <form id="formDocente" novalidate enctype="multipart/form-data">
 
     <!-- SECCIÓN 1: Datos personales -->
     <div class="seccion">
@@ -472,17 +550,17 @@
 
           <div class="campo">
             <label>Calle <span class="req">*</span></label>
-            <input type="text" name="calle" placeholder="Ej: 73 Bis" required />
+            <input type="text" name="calle" placeholder="Ej: 558" required />
           </div>
 
           <div class="campo">
             <label>Número <span class="req">*</span></label>
-            <input type="text" name="numero" placeholder="325" required />
+            <input type="text" name="numero" placeholder="1044" required />
           </div>
 
           <div class="campo">
             <label>Localidad</label>
-            <input type="text" name="localidad" placeholder="Ej: Necochea" />
+            <input type="text" name="localidad" placeholder="Ej: Quequen" />
           </div>
 
           <div class="campo">
@@ -514,8 +592,8 @@
 
           <div class="campo col-span-2">
             <label>Mail Oficial <span class="req">*</span></label>
-            <input type="email" name="mailOficial" placeholder="usuario@abc.edu.ar" required />
-            <span class="hint">Correo institucional de la provincia (@abc.edu.ar)</span>
+            <input type="email" name="mailOficial" placeholder="usuario@abc.gob.ar" required />
+            <span class="hint">Correo institucional de la provincia (@abc.gob.ar)</span>
           </div>
 
         </div>
@@ -534,11 +612,6 @@
           <div class="campo">
             <label>Título Principal <span class="req">*</span></label>
             <input type="text" name="tituloPrincipal" placeholder="Ej: Analista de Sistemas" required />
-          </div>
-
-          <div class="campo">
-            <label>Institución que lo otorgó</label>
-            <input type="text" name="institucion" placeholder="Ej: Universidad Nacional del Sur" />
           </div>
 
           <div class="campo">
@@ -563,11 +636,11 @@
           <div class="campo col-span-2">
             <label>Pdf del DNI (frente y dorso) <span class="req">*</span></label>
             <div class="upload-zone" id="zonaDni">
-              <input type="file" id="inputDni" name="archivoDni" accept="image/*,.pdf" multiple />
+              <input type="file" id="inputDni" name="archivoDni" accept="image/*,.pdf" />
               <div class="upload-icon">🪪</div>
               <h4>Subí la imágene de tu DNI en un solo archivo</h4>
               <p>Frente y dorso en PDF · Máx. 5 MB </p>
-              <span class="upload-btn-label">Seleccionar archivos</span>
+              <span class="upload-btn-label">Seleccionar archivo</span>
             </div>
             <div class="file-list" id="listaDni"></div>
           </div>
@@ -604,56 +677,127 @@
 
   </form>
 
-  <!-- Mensaje de éxito -->
+  <!-- Mensajes de estado -->
   <div class="success-msg" id="successMsg">
     <div style="font-size:48px;margin-bottom:12px">✅</div>
     <h3>¡Formulario enviado correctamente!</h3>
     <p>Los datos del legajo fueron registrados. Recibirás una confirmación en tu mail oficial.</p>
   </div>
+  <div class="error-msg" id="errorMsg">
+    <div style="font-size:48px;margin-bottom:12px">⚠️</div>
+    <h3>Ocurrió un error al enviar el formulario</h3>
+    <p id="errorText">Por favor, intentá nuevamente.</p>
+  </div>
 
 </div>
 
 <script>
-  // Progreso visual
+  const form = document.getElementById('formDocente');
+  const successMsg = document.getElementById('successMsg');
+  const errorMsg = document.getElementById('errorMsg');
+  const errorText = document.getElementById('errorText');
+  const progressBar = document.getElementById('progressBar');
+  const adminNotice = document.getElementById('adminNotice');
+  const btnBack = document.getElementById('btnBack');
+  const btnSalir = document.getElementById('btnSalir');
+  const urlParams = new URLSearchParams(window.location.search);
+  const selectedLegajoId = urlParams.get('legajoId');
+  let currentLegajoId = null;
+
+  btnSalir?.addEventListener('click', async () => {
+    try {
+      await fetch('/logout', { method: 'POST' });
+    } catch (err) {
+      console.warn('Error al cerrar sesión:', err);
+    }
+    window.location.href = '/login';
+  });
+
+  if (selectedLegajoId) {
+    btnBack?.classList.remove('hidden');
+    btnBack?.addEventListener('click', () => {
+      window.location.href = '/admin';
+    });
+  }
+
   function updateProgress() {
     const inputs = document.querySelectorAll('input[required], select');
     let filled = 0;
     inputs.forEach(i => { if (i.value.trim()) filled++; });
     const pct = Math.round((filled / inputs.length) * 100);
-    document.getElementById('progressBar').style.width = pct + '%';
+    progressBar.style.width = pct + '%';
   }
   document.addEventListener('input', updateProgress);
   updateProgress();
 
-  // Upload zones
   function setupUpload(zoneId, inputId, listId, maxMB) {
     const zone = document.getElementById(zoneId);
     const input = document.getElementById(inputId);
     const list = document.getElementById(listId);
-    let files = [];
+    let pendingFiles = [];
+    let existingFiles = [];
+
+    function formatSize(size) {
+      return size > 1024 * 1024
+        ? (size / 1024 / 1024).toFixed(1) + ' MB'
+        : (size / 1024).toFixed(0) + ' KB';
+    }
 
     function renderFiles() {
       list.innerHTML = '';
-      files.forEach((f, idx) => {
-        const ext = f.name.split('.').pop().toUpperCase();
+      const items = [
+        ...existingFiles.map((f, idx) => ({ file: f, idx, existing: true })),
+        ...pendingFiles.map((f, idx) => ({ file: f, idx, existing: false }))
+      ];
+
+      if (!items.length) {
+        list.innerHTML = '<div style="color: var(--gris); font-size: 13px;">No hay archivos cargados.</div>';
+        return;
+      }
+
+      items.forEach(entry => {
+        const { file, idx, existing } = entry;
+        const name = existing ? (file.nombreOrig || file.nombre) : file.name;
+        const ext = name.split('.').pop().toUpperCase();
         const icon = ext === 'PDF' ? '📄' : '🖼️';
-        const size = f.size > 1024*1024
-          ? (f.size/1024/1024).toFixed(1)+' MB'
-          : (f.size/1024).toFixed(0)+' KB';
+        const size = formatSize(existing ? file.tamanio : file.size);
         const item = document.createElement('div');
         item.className = 'file-item';
         item.innerHTML = `
           <span class="fi-icon">${icon}</span>
-          <span class="fi-name">${f.name}</span>
+          ${existing ? `<a class="fi-name" href="/api/legajos/${currentLegajoId}/archivos/${encodeURIComponent(file.nombre)}" target="_blank" rel="noopener">${name}</a>` : `<span class="fi-name">${name}</span>`}
           <span class="fi-size">${size}</span>
           <button type="button" class="fi-del" title="Quitar">✕</button>
         `;
         item.querySelector('.fi-del').onclick = () => {
-          files.splice(idx, 1);
-          renderFiles();
+          if (existing) removeExisting(idx);
+          else removePending(idx);
         };
         list.appendChild(item);
       });
+    }
+
+    function removePending(index) {
+      pendingFiles.splice(index, 1);
+      renderFiles();
+    }
+
+    async function removeExisting(index) {
+      const file = existingFiles[index];
+      if (!file || !currentLegajoId) return;
+      const confirmDelete = confirm(`¿Querés eliminar el archivo “${file.nombreOrig || file.nombre}”?`);
+      if (!confirmDelete) return;
+
+      const res = await fetch(`/api/legajos/${currentLegajoId}/archivos/${encodeURIComponent(file.nombre)}`, {
+        method: 'DELETE'
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'No se pudo eliminar el archivo.');
+        return;
+      }
+      existingFiles.splice(index, 1);
+      renderFiles();
     }
 
     input.addEventListener('change', () => {
@@ -664,12 +808,24 @@
         }
         return true;
       });
-      files.push(...newFiles);
+      if (zoneId === 'zonaDni' && newFiles.length > 1) {
+        alert('Solo se permite un archivo para el DNI.');
+      }
+      if (zoneId === 'zonaDni') {
+        pendingFiles = newFiles.slice(0, 1);
+      } else {
+        pendingFiles.push(...newFiles);
+      }
       renderFiles();
       input.value = '';
     });
 
-    // Drag & drop
+    if (zoneId === 'zonaDni') {
+      zone.addEventListener('click', () => {
+        alert('Recordá que el DNI debe subirse en un solo archivo y debe ser un PDF.');
+      });
+    }
+
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
     zone.addEventListener('drop', e => {
@@ -682,24 +838,134 @@
         }
         return true;
       });
-      files.push(...dropped);
+      if (zoneId === 'zonaDni') {
+        if (dropped.length > 1) {
+          alert('Solo se permite un archivo para el DNI.');
+        }
+        pendingFiles = dropped.slice(0, 1);
+      } else {
+        pendingFiles.push(...dropped);
+      }
       renderFiles();
     });
+
+    return {
+      get files() { return pendingFiles; },
+      getNewFiles() { return pendingFiles; },
+      loadExisting(files) {
+        pendingFiles = [];
+        existingFiles = Array.isArray(files) ? files.slice() : [];
+        renderFiles();
+      },
+      clear() {
+        pendingFiles = [];
+        renderFiles();
+        input.value = '';
+      },
+      clearPending() {
+        pendingFiles = [];
+        renderFiles();
+      }
+    };
   }
 
-  setupUpload('zonaDni',     'inputDni',     'listaDni',     5);
-  setupUpload('zonaTitulos', 'inputTitulos', 'listaTitulos', 10);
+  const dniUpload = setupUpload('zonaDni', 'inputDni', 'listaDni', 5);
+  const titulosUpload = setupUpload('zonaTitulos', 'inputTitulos', 'listaTitulos', 10);
 
-  // Formato CUIL automático
   document.querySelector('[name="cuil"]').addEventListener('input', function() {
     let v = this.value.replace(/\D/g,'');
-    if (v.length > 2)  v = v.slice(0,2) + '-' + v.slice(2);
+    if (v.length > 2) v = v.slice(0,2) + '-' + v.slice(2);
     if (v.length > 11) v = v.slice(0,11) + '-' + v.slice(11,12);
     this.value = v;
   });
 
-  // Validación y submit
-  document.getElementById('formDocente').addEventListener('submit', function(e) {
+  function setValue(name, value) {
+    const field = form.elements[name];
+    if (!field) return;
+    field.value = value ?? '';
+  }
+
+  function fillForm(data) {
+    if (!data) return;
+    const fields = [
+      'apellidoNombre','dni','cuil','fechaNac','calle','numero','localidad','partido',
+      'telFijo','celular','compania','mailOficial','antiguedad','tituloPrincipal','otrosTitulos'
+    ];
+    fields.forEach(name => setValue(name, data[name]));
+
+    currentLegajoId = data._id || null;
+
+    if (data.archivos) {
+      dniUpload.loadExisting(data.archivos.filter(a => a.tipo === 'dni'));
+      titulosUpload.loadExisting(data.archivos.filter(a => a.tipo === 'titulo'));
+    } else {
+      dniUpload.loadExisting([]);
+      titulosUpload.loadExisting([]);
+    }
+
+    if (data.dni) {
+      const dniField = form.elements['dni'];
+      dniField.readOnly = true;
+      dniField.classList.add('readonly');
+    }
+    if (selectedLegajoId) {
+      adminNotice.textContent = 'Estás cargando el formulario del docente seleccionado desde el panel de administración. Podés editar sus datos.';
+      adminNotice.classList.add('show');
+    } else {
+      adminNotice.classList.remove('show');
+    }
+  }
+
+  async function fetchLegajo() {
+    const endpoint = selectedLegajoId ? `/api/legajos/${selectedLegajoId}` : '/api/legajos/mi-legajo';
+    try {
+      const res = await fetch(endpoint);
+      const json = await res.json();
+      
+      if (json.isAdmin || selectedLegajoId) {
+        btnBack?.classList.remove('hidden');
+        if (!btnBack?.hasAttribute('data-listener-added')) {
+          btnBack?.addEventListener('click', () => {
+            window.location.href = '/admin';
+          });
+          btnBack?.setAttribute('data-listener-added', 'true');
+        }
+      }
+
+      if (json.isAdmin && !selectedLegajoId) {
+        adminNotice.textContent = 'Estás cargando un nuevo legajo docente.';
+        adminNotice.classList.add('show');
+        return;
+      }
+
+      if (!res.ok) {
+        if (selectedLegajoId) {
+          console.warn('No se pudo cargar el legajo seleccionado:', json.error);
+        }
+        return;
+      }
+      fillForm(json.data);
+      updateProgress();
+    } catch (err) {
+      console.error('Error al cargar datos del legajo:', err);
+    }
+  }
+
+  async function submitData(body, method, useFormData = false) {
+    const options = { method };
+    if (useFormData) {
+      options.body = body;
+    } else {
+      options.headers = { 'Content-Type': 'application/json' };
+      options.body = JSON.stringify(body);
+    }
+    const response = await fetch(method === 'POST' ? '/api/legajos' : `/api/legajos/${currentLegajoId}`, options);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Error al enviar el formulario');
+    return result;
+  }
+
+  form.addEventListener('submit', async function(e) {
     e.preventDefault();
     const required = this.querySelectorAll('[required]');
     let ok = true;
@@ -711,22 +977,102 @@
         inp.classList.remove('error');
       }
     });
+
+    const isUpdate = Boolean(currentLegajoId);
+    if (!isUpdate && dniUpload.files.length === 0) {
+      alert('Debés adjuntar al menos un archivo del DNI.');
+      ok = false;
+    }
+    if (!isUpdate && titulosUpload.files.length === 0) {
+      alert('Debés adjuntar al menos un archivo de títulos habilitantes.');
+      ok = false;
+    }
+
     if (!ok) {
       const first = this.querySelector('.error');
       if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    // Simular envío
-    document.getElementById('progressBar').style.width = '100%';
-    this.style.display = 'none';
-    document.getElementById('successMsg').classList.add('show');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const data = {
+      apellidoNombre: form.elements['apellidoNombre'].value.trim(),
+      dni: form.elements['dni'].value.trim(),
+      cuil: form.elements['cuil'].value.trim(),
+      fechaNac: form.elements['fechaNac'].value,
+      calle: form.elements['calle'].value.trim(),
+      numero: form.elements['numero'].value.trim(),
+      localidad: form.elements['localidad'].value.trim(),
+      partido: form.elements['partido'].value.trim(),
+      telFijo: form.elements['telFijo'].value.trim(),
+      celular: form.elements['celular'].value.trim(),
+      compania: form.elements['compania'].value.trim(),
+      mailOficial: form.elements['mailOficial'].value.trim(),
+      antiguedad: form.elements['antiguedad'].value.trim(),
+      tituloPrincipal: form.elements['tituloPrincipal'].value.trim(),
+      otrosTitulos: form.elements['otrosTitulos'].value.trim()
+    };
+
+    const btn = this.querySelector('.btn-submit');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+    successMsg.classList.remove('show');
+    errorMsg.classList.remove('show');
+
+    try {
+      let result;
+      if (isUpdate) {
+        await submitData(data, 'PUT');
+      } else {
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => formData.append(key, value));
+        dniUpload.getNewFiles().forEach(file => formData.append('archivoDni', file));
+        titulosUpload.getNewFiles().forEach(file => formData.append('archivosTitulos', file));
+        result = await submitData(formData, 'POST', true);
+      }
+
+      if (isUpdate) {
+        if (dniUpload.getNewFiles().length || titulosUpload.getNewFiles().length) {
+          const filesForm = new FormData();
+          dniUpload.getNewFiles().forEach(file => filesForm.append('archivoDni', file));
+          titulosUpload.getNewFiles().forEach(file => filesForm.append('archivosTitulos', file));
+          const filesRes = await fetch(`/api/legajos/${currentLegajoId}/archivos`, {
+            method: 'POST',
+            body: filesForm
+          });
+          const filesJson = await filesRes.json();
+          if (!filesRes.ok) throw new Error(filesJson.error || 'Error al subir nuevos archivos');
+          dniUpload.loadExisting(filesJson.data.filter(a => a.tipo === 'dni'));
+          titulosUpload.loadExisting(filesJson.data.filter(a => a.tipo === 'titulo'));
+          dniUpload.clearPending();
+          titulosUpload.clearPending();
+        }
+      } else {
+        if (result && result.data && result.data._id) {
+          currentLegajoId = result.data._id;
+          await fetchLegajo();
+          dniUpload.clear();
+          titulosUpload.clear();
+        }
+      }
+
+      updateProgress();
+      successMsg.classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      errorText.textContent = err.message || 'No se pudo enviar el formulario. Por favor intentá nuevamente.';
+      errorMsg.classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Enviar Formulario';
+    }
   });
 
-  // Limpiar error al escribir
   document.querySelectorAll('input, textarea, select').forEach(el => {
     el.addEventListener('input', () => el.classList.remove('error'));
   });
+
+  fetchLegajo();
 </script>
 </body>
 </html>
