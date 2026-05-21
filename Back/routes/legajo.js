@@ -201,6 +201,7 @@ router.put('/:id', async (req, res) => {
 // ─── POST /api/legajos/:id/archivos ───────────────────────────────────────────
 // Agrega archivos a un legajo existente (la secretaria sube algo manualmente)
 router.post('/:id/archivos',
+  adminOnly,
   async (req, res, next) => {
     // Necesitamos el DNI para la carpeta; lo obtenemos del legajo
     const legajo = await Legajo.findById(req.params.id).select('dni');
@@ -210,7 +211,8 @@ router.post('/:id/archivos',
   },
   upload.fields([
     { name: 'archivoDni',      maxCount: 2  },
-    { name: 'archivosTitulos', maxCount: 10 }
+    { name: 'archivosTitulos', maxCount: 10 },
+    { name: 'archivos',        maxCount: 100 }
   ]),
   async (req, res) => {
     try {
@@ -239,6 +241,7 @@ router.post('/:id/archivos',
         };
         mapear(req.files['archivoDni'],      'dni');
         mapear(req.files['archivosTitulos'], 'titulo');
+        mapear(req.files['archivos'],        'documento');
       }
       await legajo.save();
       res.json({ ok: true, data: legajo.archivos });

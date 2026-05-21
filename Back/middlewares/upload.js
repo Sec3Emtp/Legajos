@@ -19,28 +19,32 @@ const storage = multer.diskStorage({
       return;
     }
 
-    if (!req._tituloNextIndex) {
-      const dni = req.body.dni || req.params.dni || 'sin_dni';
-      const dir = path.join(UPLOADS_DIR, dni);
-      const files = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
-      const existing = files
-        .map(name => {
-          const match = name.match(/^Titulo-(\d+)\.[^.]+$/i);
-          return match ? parseInt(match[1], 10) : 0;
-        })
-        .filter(Boolean);
-      req._tituloNextIndex = existing.length ? Math.max(...existing) + 1 : 1;
+    if (file.fieldname === 'archivosTitulos') {
+      if (!req._tituloNextIndex) {
+        const dni = req.body.dni || req.params.dni || 'sin_dni';
+        const dir = path.join(UPLOADS_DIR, dni);
+        const files = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
+        const existing = files
+          .map(name => {
+            const match = name.match(/^Titulo-(\d+)\.[^.]+$/i);
+            return match ? parseInt(match[1], 10) : 0;
+          })
+          .filter(Boolean);
+        req._tituloNextIndex = existing.length ? Math.max(...existing) + 1 : 1;
+      }
+      const index = req._tituloNextIndex++;
+      cb(null, `Titulo-${index}${ext}`);
+      return;
     }
 
-    const index = req._tituloNextIndex++;
-    cb(null, `Titulo-${index}${ext}`);
+    const timestamp = Date.now();
+    const counter = (req._fileIndex = (req._fileIndex || 0) + 1);
+    cb(null, `Archivo-${timestamp}-${counter}${ext}`);
   }
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-  if (allowed.includes(file.mimetype)) cb(null, true);
-  else cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}`), false);
+  cb(null, true);
 };
 
 const upload = multer({

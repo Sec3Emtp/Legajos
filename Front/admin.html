@@ -158,6 +158,19 @@
       display: grid;
       gap: 10px;
     }
+    .files-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .file-message {
+      color: var(--muted);
+      font-size: 14px;
+      min-width: 200px;
+    }
     .file-item {
       display: flex;
       align-items: center;
@@ -252,6 +265,11 @@
       </div>
       <div class="card">
         <h2>Documentación</h2>
+        <div class="files-header">
+          <button class="button" id="uploadDocsBtn" disabled>Agregar documentos</button>
+          <span class="file-message" id="fileMessage">Seleccioná un docente para habilitar la subida.</span>
+          <input type="file" id="fileUploadInput" multiple style="display: none;" />
+        </div>
         <div id="filesContent">
           <p class="message">Seleccioná un docente para ver los archivos subidos.</p>
         </div>
@@ -270,6 +288,9 @@
     const filesContent = document.getElementById('filesContent');
     const logoutBtn = document.getElementById('logoutBtn');
     const goFormBtn = document.getElementById('goForm');
+    const uploadDocsBtn = document.getElementById('uploadDocsBtn');
+    const fileUploadInput = document.getElementById('fileUploadInput');
+    const fileMessage = document.getElementById('fileMessage');
     const listMessage = document.getElementById('listMessage');
     let debounceTimer;
 
@@ -313,7 +334,42 @@
           <div class="detail-field full-width"><strong>Otros títulos</strong><span>${legajo.otrosTitulos || '-'}</span></div>
         </div>
       `;
+      updateUploadButtonState(true);
+      fileMessage.textContent = 'Seleccioná los archivos para subir al legajo.';
       renderFiles(legajo.archivos || []);
+    }
+
+    function updateUploadButtonState(enabled) {
+      uploadDocsBtn.disabled = !enabled;
+    }
+
+    async function uploadFiles() {
+      if (!currentLegajo || !fileUploadInput.files.length) return;
+
+      const files = Array.from(fileUploadInput.files);
+      const formData = new FormData();
+      files.forEach(file => formData.append('archivos', file));
+
+      updateUploadButtonState(false);
+      fileMessage.textContent = 'Subiendo archivos...';
+
+      try {
+        const response = await fetch(`/api/legajos/${encodeURIComponent(currentLegajo._id)}/archivos`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'No se pudieron subir los archivos');
+
+        currentLegajo.archivos = result.data;
+        renderFiles(currentLegajo.archivos || []);
+        fileUploadInput.value = '';
+        fileMessage.textContent = `${files.length} archivo(s) subido(s) correctamente.`;
+      } catch (err) {
+        fileMessage.textContent = `Error: ${err.message}`;
+      } finally {
+        updateUploadButtonState(true);
+      }
     }
 
     function renderFiles(archivos) {
@@ -349,6 +405,8 @@
 
         total = result.total;
         currentLegajo = null;
+        updateUploadButtonState(false);
+        fileMessage.textContent = 'Seleccioná un docente para habilitar la subida.';
         renderList(result.data);
         paginationInfo.textContent = `Mostrando ${result.data.length} de ${total} registros (página ${result.page})`;
         prevPageBtn.disabled = page <= 1;
@@ -403,6 +461,16 @@
         page = 1;
         fetchLegajos();
       }, 250);
+    });
+
+    uploadDocsBtn.addEventListener('click', () => {
+      if (!currentLegajo) return;
+      fileUploadInput.click();
+    });
+
+    fileUploadInput.addEventListener('change', () => {
+      if (!fileUploadInput.files.length) return;
+      uploadFiles();
     });
 
     prevPageBtn.addEventListener('click', () => {

@@ -2,12 +2,12 @@ const mongoose = require('mongoose');
 
 const CargoSchema = new mongoose.Schema({
   cupof:          { type: String, default: '' },
-  materia:        { type: String, default: '' },
+  materia:        { type: String, default: '' },  // Materia/PI
+  modulos:        { type: String, default: '' },
   revista:        { type: String, default: '' },  // Prov. / Suplente / etc.
-  carga:          { type: String, default: '' },  // Alternado / Simple / etc.
-  a:              { type: String, default: '' },
-  d:              { type: String, default: '' },
-  t:              { type: String, default: '' },
+  anio:           { type: String, default: '' },  // 1 al 6
+  division:       { type: String, default: '' },  // A, B, O, C
+  turno:          { type: String, default: '' },  // M o T
   tomaPosesion:   { type: Date,   default: null },
   cese:           { type: Date,   default: null },
   observaciones:  { type: String, default: '' }
@@ -16,7 +16,7 @@ const CargoSchema = new mongoose.Schema({
 const ArchivoSchema = new mongoose.Schema({
   nombre:       { type: String, required: true },
   nombreOrig:   { type: String, required: true },
-  tipo:         { type: String, enum: ['dni', 'titulo'], required: true },
+  tipo:         { type: String, required: true },
   mimetype:     { type: String },
   tamanio:      { type: Number },
   subidoEn:     { type: Date, default: Date.now }

@@ -298,6 +298,35 @@
     .toast-close:hover {
       color: #64748b;
     }
+    .add-cargo-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 8px 0 24px;
+    }
+    .btn-add-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #eef3ff;
+      color: var(--azul);
+      border: 2px dashed var(--azul-claro);
+      border-radius: 12px;
+      padding: 12px 32px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      width: 100%;
+    }
+    .btn-add-inline:hover {
+      background: #dbe8ff;
+      border-color: var(--azul);
+      transform: translateY(-1px);
+    }
+    .btn-add-inline .plus-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
   </style>
 </head>
 <body>
@@ -327,6 +356,12 @@
       </div>
 
       <div class="cargo-list" id="cargoList"></div>
+
+      <div class="add-cargo-wrap">
+        <button type="button" class="btn-add-inline" id="addRowInline">
+          <span class="plus-icon">＋</span> Agregar cargo
+        </button>
+      </div>
 
       <div class="footer">
         <p class="notice">Completá al menos un cargo antes de guardar. Los cargos se guardarán en el legajo asociado al DNI autorizado.</p>
@@ -413,51 +448,51 @@
           <button type="button" class="btn-delete-cargo">Eliminar cargo</button>
         </div>
         <div class="cargo-grid">
+
           <div class="campo" style="grid-column: span 3;">
             <label>Cupof</label>
             <input type="text" name="cupof" value="${data.cupof || ''}" placeholder="450244" />
           </div>
           <div class="campo" style="grid-column: span 4;">
-            <label>Materia</label>
+            <label>Materia / PI</label>
             <input type="text" name="materia" value="${data.materia || ''}" placeholder="EMATP (CII)" />
+          </div>
+          <div class="campo" style="grid-column: span 3;">
+            <label>Módulos</label>
+            <input type="text" name="modulos" value="${data.modulos || ''}" placeholder="Ej: 3" />
           </div>
           <div class="campo" style="grid-column: span 2;">
             <label>Revista</label>
             <input type="text" name="revista" value="${data.revista || ''}" placeholder="Prov." />
           </div>
-          <div class="campo" style="grid-column: span 3;">
-            <label>Carga</label>
-            <input type="text" name="carga" value="${data.carga || ''}" placeholder="Alternado" />
-          </div>
 
           <div class="campo" style="grid-column: span 4;">
-            <label>Revista (A / D / T)</label>
-            <div class="campo-small-group">
-              <div class="campo-small">
-                <select name="a">
-                  <option value="">-</option>
-                  <option value="A" ${data.a === 'A' ? 'selected' : ''}>A</option>
-                </select>
-              </div>
-              <div class="campo-small">
-                <select name="d">
-                  <option value="">-</option>
-                  <option value="D" ${data.d === 'D' ? 'selected' : ''}>D</option>
-                </select>
-              </div>
-              <div class="campo-small">
-                <select name="t">
-                  <option value="">-</option>
-                  <option value="T" ${data.t === 'T' ? 'selected' : ''}>T</option>
-                </select>
-              </div>
-            </div>
+            <label>Año</label>
+            <select name="anio">
+              <option value="">-</option>
+              ${['1','2','3','4','5','6'].map(v => `<option value="${v}" ${data.anio === v ? 'selected' : ''}>${v}</option>`).join('')}
+            </select>
           </div>
           <div class="campo" style="grid-column: span 4;">
+            <label>División</label>
+            <select name="division">
+              <option value="">-</option>
+              ${['A','B','O','C'].map(v => `<option value="${v}" ${data.division === v ? 'selected' : ''}>${v}</option>`).join('')}
+            </select>
+          </div>
+          <div class="campo" style="grid-column: span 4;">
+            <label>Turno</label>
+            <select name="turno">
+              <option value="">-</option>
+              <option value="M" ${data.turno === 'M' ? 'selected' : ''}>M</option>
+              <option value="T" ${data.turno === 'T' ? 'selected' : ''}>T</option>
+            </select>
+          </div>
+          <div class="campo" style="grid-column: span 6;">
             <label>Toma posesión</label>
             <input type="date" name="tomaPosesion" value="${data.tomaPosesion || ''}" />
           </div>
-          <div class="campo" style="grid-column: span 4;">
+          <div class="campo" style="grid-column: span 6;">
             <label>Cese</label>
             <input type="date" name="cese" value="${data.cese || ''}" />
           </div>
@@ -513,11 +548,11 @@
           result.data.cargos.forEach(cargo => createCargoItem({
             cupof: cargo.cupof,
             materia: cargo.materia,
+            modulos: cargo.modulos,
             revista: cargo.revista,
-            carga: cargo.carga,
-            a: cargo.a,
-            d: cargo.d,
-            t: cargo.t,
+            anio: cargo.anio,
+            division: cargo.division,
+            turno: cargo.turno,
             tomaPosesion: cargo.tomaPosesion ? cargo.tomaPosesion.slice(0, 10) : '',
             cese: cargo.cese ? cargo.cese.slice(0, 10) : '',
             observaciones: cargo.observaciones
@@ -531,6 +566,12 @@
     }
 
     addRowButton.addEventListener('click', () => createCargoItem());
+    document.getElementById('addRowInline').addEventListener('click', () => {
+      createCargoItem();
+      // scroll to the new card
+      const cards = cargoList.querySelectorAll('.cargo-item');
+      if (cards.length) cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 
     btnBack.addEventListener('click', () => {
       window.location.href = selectedLegajoId ? '/admin' : '/form';
@@ -540,7 +581,7 @@
       showError('');
       successMsg.classList.remove('show');
 
-      const cargos = collectRows().filter(row => row.cupof || row.materia || row.revista || row.carga || row.tomaPosesion || row.cese || row.observaciones);
+      const cargos = collectRows().filter(row => row.cupof || row.materia || row.modulos || row.revista || row.anio || row.division || row.turno || row.tomaPosesion || row.cese || row.observaciones);
       if (!cargos.length) {
         showError('Agregá al menos un cargo con datos para guardar.');
         return;
