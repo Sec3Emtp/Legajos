@@ -1,0 +1,17 @@
+[Unit]
+Description=Legajos app (Node.js)
+After=network.target mongod.service
+
+[Service]
+Type=simple
+# Reemplazá este usuario por el usuario que ejecutará la app (ej: ubuntu, pi)
+User=YOUR_USERNAME
+WorkingDirectory=/opt/legajos
+EnvironmentFile=/opt/legajos/.env
+ExecStart=/usr/bin/node Back/server.js
+Restart=on-failure
+RestartSec=5s
+SyslogIdentifier=legajos
+
+[Install]
+WantedBy=multi-user.target

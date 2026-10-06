@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const os = require('os');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
@@ -88,9 +89,21 @@ app.get('/', (req, res) => {
 
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
+    const interfaces = os.networkInterfaces();
+    const addresses = [];
+    Object.values(interfaces).forEach(ifArr => {
+      if (!ifArr) return;
+      ifArr.forEach(i => {
+        if (i.family === 'IPv4' && !i.internal) addresses.push(i.address);
+      });
+    });
+
     console.log('MongoDB conectado');
-    app.listen(port, () => {
-      console.log(`Servidor iniciado en http://localhost:${port}`);
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Servidor escuchando en http://0.0.0.0:${port}`);
+      if (addresses.length) {
+        addresses.forEach(addr => console.log(`Accesible en http://${addr}:${port}`));
+      }
     });
   })
   .catch(err => {
